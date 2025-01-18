@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/jmiguel-nitro/Documents/cpp/fireC/main.c" "CMakeFiles/fireC.dir/main.c.o" "gcc" "CMakeFiles/fireC.dir/main.c.o.d"
+  "/home/jmiguel-nitro/Documents/cpp/fireC/main.cpp" "CMakeFiles/fireC.dir/main.cpp.o" "gcc" "CMakeFiles/fireC.dir/main.cpp.o.d"
   )
 
 # Targets to which this target links.
