@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/fireC.dir/main.cpp.o -o fireC  -lraylib 
