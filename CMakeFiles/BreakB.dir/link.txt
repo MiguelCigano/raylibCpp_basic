@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/BreakB.dir/main.cpp.o CMakeFiles/BreakB.dir/src/ball.cpp.o CMakeFiles/BreakB.dir/src/paddle.cpp.o CMakeFiles/BreakB.dir/src/brick.cpp.o -o BreakB  -lraylib 

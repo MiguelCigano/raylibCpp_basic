@@ -1,144 +1,110 @@
-#include <stdio.h>
-#include <iostream>
-#include "raylib.h"
-
-// int main() {
-//     // Inicializar ventana
-//     const int screenWidth = 800;
-//     const int screenHeight = 600;
-//     InitWindow(screenWidth, screenHeight, "Barra de Volumen - raylib");
-
-//     // Variables de control
-//     int volume = 50; // Rango de 0 a 100
-//     const int volumeBarWidth = 400;
-//     const int volumeBarHeight = 20;
-//     const int volumeBarX = (screenWidth - volumeBarWidth) / 2;
-//     const int volumeBarY = screenHeight / 2;
-
-//     bool dragging = false;
-
-//     SetTargetFPS(60);
-
-//     while (!WindowShouldClose()) {
-//         // Detectar clic y arrastre
-//         Vector2 mousePos = GetMousePosition();
-//         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-//             // Revisar si el clic fue dentro de la barra
-//             if (CheckCollisionPointRec(mousePos, (Rectangle){ volumeBarX, volumeBarY, volumeBarWidth, volumeBarHeight })) {
-//                 dragging = true;
-//             }
-//         }
-//         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-//             dragging = false;
-//         }
-
-//         // Ajustar volumen si se está arrastrando
-//         if (dragging) {
-//             volume = ((mousePos.x - volumeBarX) * 100) / volumeBarWidth;
-//             if (volume < 0) volume = 0;
-//             if (volume > 100) volume = 100;
-//         }
-
-//         // Dibujar en pantalla
-//         BeginDrawing();
-//         ClearBackground(RAYWHITE);
-
-//         DrawText("Drag to set volumen", 10, 10, 20, PINK);
-
-//         // Dibujar barra de volumen vacía
-//         DrawRectangle(volumeBarX, volumeBarY, volumeBarWidth, volumeBarHeight, LIGHTGRAY);
-//         // Dibujar nivel de volumen
-//         DrawRectangle(volumeBarX, volumeBarY, volume * (volumeBarWidth / 100), volumeBarHeight, PINK);
-//         // Dibujar borde de la barra
-//         DrawRectangleLines(volumeBarX, volumeBarY, volumeBarWidth, volumeBarHeight, BLACK);
-
-//         // Mostrar porcentaje de volumen
-//         DrawText(TextFormat("Volumen: %d%%", volume), volumeBarX + volumeBarWidth / 2 - 50, volumeBarY - 30, 20, BLACK);
-
-//         EndDrawing();
-//     }
-
-//     CloseWindow(); // Cerrar ventana
-//     return 0;
-// }
-
-
+/*
+BreakerBrock/
+├── src/
+│   ├── main.cpp        // Punto de entrada principal
+│   ├── Game.cpp        // Implementación de la clase Game
+│   ├── Ball.cpp        // Implementación de la clase Ball
+│   ├── Paddle.cpp      // Implementación de la clase Paddle
+│   └── Brick.cpp       // Implementación de la clase Brick
+├── include/
+│   ├── Game.h          // Declaración de la clase Game
+│   ├── Ball.h          // Declaración de la clase Ball
+│   ├── Paddle.h        // Declaración de la clase Paddle
+│   └── Brick.h         // Declaración de la clase Brick
+└── Makefile            // Script para compilar el proyecto
+*/
 
 #include "raylib.h"
+#include "game.h"
+#include <vector>
 
-// Clase para la barra de volumen
-class BarraDeVolumen {
-    private:
-        int x, y;               // Posición de la barra
-        int width, height;      // Dimensiones de la barra
-        int volumen;            // Nivel de volumen (0-100)
-        bool arrastrando;       // Estado de arrastre
+Game::Game(int width, int height) : screenWidth(width), screenHeight(height),
+    ball({ width / 2.0f, height / 2.0f }, { 4.0f, -4.0f }, 8.0f),
+    paddle(width / 2.0f - 50, height - 20, 100, 10, 5.0f) {
+        init_bricks();
+}
 
-    public:
-        // Constructor
-        BarraDeVolumen(int posX, int posY, int ancho, int alto, int volumenInicial)
-            : x(posX), y(posY), width(ancho), height(alto), volumen(volumenInicial), arrastrando(false) {}
+void Game::init_bricks() {
+    const int rows    =  6;
+    const int columns = 10;
+    const float brick_width  = screenWidth / columns;
+    const float brick_height = 20;
 
-        // Método para dibujar la barra
-        void Dibujar() const {
-            // Dibujar barra vacía
-            DrawRectangle(x, y, width, height, VIOLET);
-            // Dibujar nivel actual de volumen
-            DrawRectangle(x, y, volumen * width / 100, height, PINK);
-            // Dibujar borde
-            DrawRectangleLines(x, y, width, height, BLACK);
-            // Dibujar texto del porcentaje de volumen
-            DrawText(TextFormat("%d%%", volumen), x + width / 2 - 20, y - 30, 20, BLACK);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            bricks.emplace_back(
+                j * brick_width, 
+                i * brick_height, 
+                brick_width - 2, 
+                brick_height - 2 );
         }
+    }
+}
 
-        // Método para actualizar el estado de la barra según la interacción del mouse
-        void Actualizar() {
-            Vector2 mousePos = GetMousePosition();
-
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                if (CheckCollisionPointRec(mousePos, { (float)x, (float)y, (float)width, (float)height })) {
-                    arrastrando = true;
-                }
-            }
-            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-                arrastrando = false;
-            }
-
-            if (arrastrando) {
-                volumen = ((mousePos.x - x) * 100) / width;
-                if (volumen < 0) volumen = 0;
-                if (volumen > 100) volumen = 100;
-            }
+void Game::update_game() {
+    ball.Move();
+    ball.wall_collision(screenWidth, screenHeight);
+    
+    // Paddle collision
+    if (CheckCollisionCircleRec(ball.position, ball.radius, paddle.rect)) {
+        ball.speed.y *= -1;
+        ball.position.y = paddle.rect.y - ball.radius; // adjust position to avoid sticking
+    }
+    // Brick collisions
+    for (auto& brick : bricks) {
+        if (brick.active && CheckCollisionCircleRec(ball.position, ball.radius, brick.rect)) {
+            brick.active = false;
+            ball.speed.y *= -1;
+            break;
         }
+    }
+    // Paddle movement
+    paddle.Move(screenWidth);
+}
 
-        // Obtener el volumen actual
-        int GetVolumen() const {
-            return volumen;
+void Game::draw_game() {
+    ball.Draw();
+    paddle.Draw();
+    for (auto& brick : bricks) {
+        brick.Draw();
+    }
+}
+
+bool Game::game_over_game() {
+    return ball.out_bounds(screenHeight);
+}
+
+bool Game::win_game() {
+    for (auto& brick : bricks) {
+        if (brick.active) {
+            return false;
         }
-};
+    }
+    return true;
+}
 
-int main() {
-    // Inicializar ventana
-    const int screenWidth = 500;
-    const int screenHeight = 300;
-    InitWindow(screenWidth, screenHeight, "Barra de Volumen con Clases - raylib");
+int main() 
+{
+    const int screenWidth  = 800;
+    const int screenHeight = 600;
 
-    // Crear una instancia de la clase BarraDeVolumen
-    BarraDeVolumen barra((screenWidth - 400) / 2, screenHeight / 2, 400, 20, 50);
+    InitWindow(screenWidth, screenHeight, "BBplay");
+    Game game(screenWidth, screenHeight);
 
     SetTargetFPS(60);
-
     while (!WindowShouldClose()) {
-        // Actualizar la barra
-        barra.Actualizar();
-
-        // Dibujar todo
         BeginDrawing();
-        ClearBackground(RAYWHITE);
-
-        DrawText("Drag to set", 100, 100, 20, DARKGRAY);
-        barra.Dibujar(); // Usar el método de la clase para dibujar la barra
-
+        ClearBackground(DARKGRAY);
+        if (game.game_over_game()) {
+            DrawText("Game Over!!!", (screenWidth / 2) - 100, screenHeight / 2, 20, RED );
+        }
+        else if (game.win_game()) {
+            DrawText("You Win!!", (screenWidth / 2) - 100, screenHeight / 2, 20, GREEN );
+        }
+        else {
+            game.update_game();
+            game.draw_game();
+        }
         EndDrawing();
     }
 

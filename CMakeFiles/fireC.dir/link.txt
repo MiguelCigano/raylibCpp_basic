@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/fireC.dir/main.cpp.o CMakeFiles/fireC.dir/src/ball.cpp.o CMakeFiles/fireC.dir/src/paddle.cpp.o CMakeFiles/fireC.dir/src/brick.cpp.o -o fireC  -lraylib 
